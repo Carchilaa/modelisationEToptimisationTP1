@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include<stdio.h>
+#define MIN(i, j) (((i) < (j)) ? (i) : (j))
+
 typedef struct coup_poids {
 		int a; //Poids de l'objet
 		int c;//Cout de l'objet 
@@ -61,34 +63,56 @@ int comparaison(const void *i1, const void *i2){
 int KP_LP(dataSet* dsptr)
 {
 	int rval = 0;
-	int n = dsptr->n
+	int n = dsptr->n;
 	
 	STR *str = (STR*)malloc(sizeof(STR)*n);
 
-	for(int i = 0; i < n; i++)
+	for(int i = 0; i < n; i++){
 		str[i].a = dsptr->a[i];
 		str[i].c = dsptr->c[i];
 		str[i].ratio = (double) dsptr->c[i]/dsptr->a[i];
 		str[i].index = i;
-
+	}
 	
-	qsort(str, sizeof(str), n, comparaison);
-
-	int x
-	for(int i = 0; i < n; i++)
-		x[i] = 0
-	
-	int b = dsptr->b;
-
-	for(int j = 1; i<n; j++){
-		if b == 0
-		{
-			return dsptr->x;
-		}
-		dsptr->x[j] = min((b/str->a[j], 1));
-		b = b - (dsptr->x[j]*str->a[j]);
+	for(int i = 0; i < n; i++){
+		printf("str[%d] = %f\n", i, str[i].ratio);
 	}
 
-	return dsptr->x;
+	
+	//qsort(str, n, sizeof(str), comparaison);
+
+	printf("Ratio apres le tri: \n");
+	for(int i = 0; i < n; i++){
+		printf("str[%d] = %f\n", str[i].index, str[i].ratio);
+	}
+
+	double* x = malloc(n * sizeof(double));
+	for(int i = 0; i < n; i++){
+		x[i] = 0;
+	}
+		
+	
+	double b = dsptr->b;
+
+	for(int j = 0; j< n; j++){
+		if (b == 0)
+		{
+			return x;
+		}
+		x[j] = MIN((b/str[j].a), 1);
+		printf("Valeur de x[%d] : %f \n", j, x[j]);
+
+		printf("Valeur de b avant la soustraction %f \n", b);
+		b = b - (x[j]*str[j].a);
+
+		printf("Valeur de b apres la soustraction %f \n", b);
+	}
+
+	free(str);
+	printf("Tableau x final :\n");
+	for (int i = 0; i < dsptr->n; i++) {
+    	printf("x[%d] = %f\n", i, x[i]);
+	}
+	return x;
 }
 

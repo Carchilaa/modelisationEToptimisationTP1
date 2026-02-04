@@ -25,7 +25,7 @@ OBJS = TP1Functions.o TP1.o
 CC = gcc
 
 # C Compiler options
-CFLAGS = -m64 -fPIC -fexceptions -O3 -pipe -DNDEBUG -Wall -g
+CFLAGS = -m64 -fPIC -fexceptions -O3 -pipe -DNDEBUG -Wall -g -lm
 
 CYGPATH_W = echo
 
