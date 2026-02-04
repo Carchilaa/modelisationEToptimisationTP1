@@ -75,7 +75,7 @@ int KP_LP(dataSet* dsptr)
 	}
 	
 	for(int i = 0; i < n; i++){
-		printf("str[%d] = %f\n", i, str[i].ratio);
+		printf("str[%d] = %f\n", str[i].index, str[i].ratio);
 	}
 
 	
@@ -108,7 +108,7 @@ int KP_LP(dataSet* dsptr)
 		printf("Valeur de b apres la soustraction %f \n", b);
 	}
 
-	free(str);
+	//free(str);
 	printf("Tableau x final :\n");
 	for (int i = 0; i < dsptr->n; i++) {
     	printf("x[%d] = %f\n", i, x[i]);
@@ -116,3 +116,9 @@ int KP_LP(dataSet* dsptr)
 	return x;
 }
 
+
+int KP_dynamic(dataSet* dsptr){
+	int rval = 0;
+
+	return rval;
+}
