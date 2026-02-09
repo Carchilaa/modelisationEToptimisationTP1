@@ -43,9 +43,42 @@ int read_TP1_instance(FILE*fin,dataSet* dsptr)
 
 int KP_greedy(dataSet* dsptr)
 {
-	int rval = 0;	
+	int rval = 0;
+	int n = dsptr->n;
+	
+	STR *str = (STR*)malloc(sizeof(STR)*n);
 
-	return rval;
+	for(int i = 0; i < n; i++){
+		str[i].a = dsptr->a[i];
+		str[i].c = dsptr->c[i];
+		str[i].ratio = (double) dsptr->c[i]/dsptr->a[i];
+		str[i].index = i;
+	}
+
+	double* x = malloc(n * sizeof(double));
+	for(int i = 0; i < n; i++){
+		x[i] = 0;
+	}
+
+	double b = dsptr->b;
+
+	for(int j = 0; j < n; j++){
+		if(b == 0){
+			return x;
+		}
+
+		if(b >= str[j].a){
+			x[j] = 1;
+			b = b - str[j].a;
+		}
+	}
+
+
+	printf("Tableau x final  greedy:\n");
+	for (int i = 0; i < dsptr->n; i++) {
+    	printf("x[%d] = %f\n", i, x[i]);
+	}
+	return x;
 }
 
 //Fonction de comparaison qsort
@@ -74,17 +107,17 @@ int KP_LP(dataSet* dsptr)
 		str[i].index = i;
 	}
 	
-	for(int i = 0; i < n; i++){
-		printf("str[%d] = %f\n", str[i].index, str[i].ratio);
-	}
+	//for(int i = 0; i < n; i++){
+	//	printf("str[%d] = %f\n", str[i].index, str[i].ratio);
+	//}
 
 	
 	//qsort(str, n, sizeof(str), comparaison);
 
-	printf("Ratio apres le tri: \n");
-	for(int i = 0; i < n; i++){
-		printf("str[%d] = %f\n", str[i].index, str[i].ratio);
-	}
+	//printf("Ratio apres le tri: \n");
+	//for(int i = 0; i < n; i++){
+	//	printf("str[%d] = %f\n", str[i].index, str[i].ratio);
+	//}
 
 	double* x = malloc(n * sizeof(double));
 	for(int i = 0; i < n; i++){
@@ -100,16 +133,16 @@ int KP_LP(dataSet* dsptr)
 			return x;
 		}
 		x[j] = MIN((b/str[j].a), 1);
-		printf("Valeur de x[%d] : %f \n", j, x[j]);
+		//printf("Valeur de x[%d] : %f \n", j, x[j]);
 
-		printf("Valeur de b avant la soustraction %f \n", b);
+		//printf("Valeur de b avant la soustraction %f \n", b);
 		b = b - (x[j]*str[j].a);
 
-		printf("Valeur de b apres la soustraction %f \n", b);
+		//printf("Valeur de b apres la soustraction %f \n", b);
 	}
 
 	//free(str);
-	printf("Tableau x final :\n");
+	printf("Tableau x final Linear:\n");
 	for (int i = 0; i < dsptr->n; i++) {
     	printf("x[%d] = %f\n", i, x[i]);
 	}
