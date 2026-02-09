@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include<stdio.h>
 #define MIN(i, j) (((i) < (j)) ? (i) : (j))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 typedef struct coup_poids {
 		int a; //Poids de l'objet
@@ -151,7 +152,84 @@ int KP_LP(dataSet* dsptr)
 
 
 int KP_dynamic(dataSet* dsptr){
+	
 	int rval = 0;
+	
+	int n = dsptr->n;
+	//Definition de la structure
+	STR *str = (STR*)malloc(sizeof(STR)*n);
 
-	return rval;
+	for(int i = 0; i < n; i++){
+		str[i].a = dsptr->a[i];
+		str[i].c = dsptr->c[i];
+		str[i].ratio = (double) dsptr->c[i]/dsptr->a[i];
+		str[i].index = i;
+	}
+
+	
+	double b = dsptr->b;
+	//D(y) = max{j ⩽ k : xj = 1 pour le probleme Pk(y)}
+	int* D = malloc((b + 1) * sizeof(int));
+
+	//Z(y) = valeur optimale du probl`eme Pk(y)
+	int* Z = malloc((b + 1) * sizeof(int));
+
+	int* Z_prime = malloc((b + 1) * sizeof(int));
+	for(int y = 0; y <= b; y++){
+		Z[y] = 0;
+		D[y] = 0;
+		Z_prime[y] = 0;
+	}
+
+	
+
+	for(int k = 0; k<n; k++){
+		for(int y = 0; y <= b; y++){
+			Z_prime[y] = Z[y];
+		}
+
+		for(int y = str[k].a; y <= b; y++ ){
+			if((Z_prime[y - str[k].a] + str[k].c)> Z_prime[y]){
+				D[y] = k + 1;
+				Z[y] = MAX(Z_prime[y], (str[k].c + Z_prime[y-str[k].a]));
+			}
+			
+		}
+	}
+
+	double* x = malloc(n * sizeof(double));
+	for(int j = 0; j < n; j++){
+		x[j] = 0;
+	}
+
+	int y = b;
+
+	while(y > 0){
+		while(Z[y] == Z[y - 1]){
+			y = y - 1;
+		}
+
+		if (D[y] > 0) {
+            x[D[y] - 1] = 1;  
+        };
+		y = y - str[D[y] -1].a;
+
+	}
+
+	printf("Tableau x final Dynamic Programming:\n");
+	for (int i = 0; i < dsptr->n; i++) {
+    	printf("x[%d] = %f\n", i, x[i]);
+	}
+
+
+	printf("VALEURS DE D:\n");
+	for (int y = 0; y <= b; y++) {
+    	printf("D[%d] = %d\n", y, D[y]);
+	}
+
+	printf("VALEURS DE Z:\n");
+	for (int y = 0; y <= b; y++) {
+    	printf("Z[%d] = %d\n", y, Z[y]);
+	}
+	return x;
 }

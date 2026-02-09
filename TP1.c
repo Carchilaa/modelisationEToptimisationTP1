@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 	//execute your solution methods on the instance you just read
 	KP_greedy(&data);
 	KP_LP(&data);
-
+	KP_dynamic(&data);
 
 	return rval;
 }
