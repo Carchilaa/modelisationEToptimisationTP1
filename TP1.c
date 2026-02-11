@@ -53,6 +53,7 @@ int main(int argc, char **argv)
 	KP_LP(&data);
 	printf("Run DP:\n");
 	KP_dynamic(&data);
+	KP_VP(&data);
 
 	return rval;
 }

@@ -267,7 +267,15 @@ int KP_dynamic(dataSet *dsptr) {
 }
 
 int KP_VP(dataSet *dsptr){
+
 	int rval;
+	int greedy_solution = KP_greedy(dsptr);
+	int relax_solution = KP_LP(dsptr);
+	int n = dsptr->n;
+
+	for(int j = 0; j < n; j++){
+		//dsptr->c[j] = abs(dsptr->c[j] - (()))
+	}
 
 	return rval;
 }

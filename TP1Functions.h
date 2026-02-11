@@ -29,5 +29,6 @@ int read_TP1_instance(FILE*fin,dataSet* dsptr);
 int KP_greedy(dataSet* dsptr);
 double KP_LP(dataSet* dsptr);
 int KP_dynamic(dataSet* dsptr);
+int KP_VP(dataSet* dsptr);
 
 
