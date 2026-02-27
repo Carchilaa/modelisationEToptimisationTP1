@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+
 #define MIN(i, j) (((i) < (j)) ? (i) : (j))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -13,6 +14,7 @@ typedef struct coup_poids {
   double ratio;
   int index;
 } STR;
+
 int read_TP1_instance(FILE *fin, dataSet *dsptr) {
   int rval = 0;
 
@@ -41,69 +43,7 @@ int read_TP1_instance(FILE *fin, dataSet *dsptr) {
   return rval;
 }
 
-int KP_greedy(dataSet *dsptr) {
-  int n = dsptr->n;
-
-  STR *str = (STR *)malloc(sizeof(STR) * n);
-
-  for (int i = 0; i < n; i++) {
-    str[i].a = dsptr->a[i];
-    str[i].c = dsptr->c[i];
-    str[i].ratio = (double)dsptr->c[i] / dsptr->a[i];
-    str[i].index = i;
-  }
-
-  double *x = malloc(n * sizeof(double));
-  for (int i = 0; i < n; i++) {
-    x[i] = 0;
-  }
-
-  double b = dsptr->b;
-
-  for (int j = 0; j < n; j++) {
-    if (b == 0) {
-      printf("Tableau x final  greedy:\n");
-      for (int i = 0; i < dsptr->n; i++) {
-        printf("x[%d] = %f\n", i, x[i]);
-      }
-
-      int cout_final = 0;
-
-      for (int i = 0; i < dsptr->n; i++) {
-        if (x[i] != 0) {
-          cout_final += x[i] * str[i].c;
-        }
-      }
-
-      printf("Cout final de l'algorithme greedy : %d \n", cout_final);
-      return cout_final;
-    }
-
-    if (b >= str[j].a) {
-      x[j] = 1;
-      b = b - str[j].a;
-    }
-  }
-
-  printf("Tableau x final  greedy:\n");
-  for (int i = 0; i < dsptr->n; i++) {
-    printf("x[%d] = %f\n", i, x[i]);
-  }
-
-  int cout_final = 0;
-
-  for (int i = 0; i < dsptr->n; i++) {
-    if (x[i] != 0) {
-      cout_final += x[i] * str[i].c;
-    }
-  }
-
-  printf("Cout final de l'algorithme greedy : %d \n", cout_final);
-  return cout_final;
-}
-
 // Fonction de comparaison qsort
-
 int comparaison(const void *i1, const void *i2) {
   STR *item1 = (STR *)i1;
   STR *item2 = (STR *)i2;
@@ -116,7 +56,7 @@ int comparaison(const void *i1, const void *i2) {
   return 0;
 }
 
-double KP_LP(dataSet *dsptr) {
+int KP_greedy(dataSet *dsptr) {
   int n = dsptr->n;
 
   STR *str = (STR *)malloc(sizeof(STR) * n);
@@ -128,16 +68,7 @@ double KP_LP(dataSet *dsptr) {
     str[i].index = i;
   }
 
-  // for(int i = 0; i < n; i++){
-  //	printf("str[%d] = %f\n", str[i].index, str[i].ratio);
-  // }
-
-  // qsort(str, n, sizeof(str), comparaison);
-
-  // printf("Ratio apres le tri: \n");
-  // for(int i = 0; i < n; i++){
-  //	printf("str[%d] = %f\n", str[i].index, str[i].ratio);
-  // }
+  qsort(str, n, sizeof(STR), comparaison);
 
   double *x = malloc(n * sizeof(double));
   for (int i = 0; i < n; i++) {
@@ -148,55 +79,106 @@ double KP_LP(dataSet *dsptr) {
 
   for (int j = 0; j < n; j++) {
     if (b == 0) {
-      printf("Tableau x final Linear:\n");
-      for (int i = 0; i < dsptr->n; i++) {
-        printf("x[%d] = %f\n", i, x[i]);
-      }
+      break;
+    }
 
-      double cout_final = 0;
+    if (b >= str[j].a) {
+      x[j] = 1;
+      b = b - str[j].a;
+    }
+  }
 
-      for (int i = 0; i < dsptr->n; i++) {
-        if (x[i] != 0) {
-          cout_final += x[i] * str[i].c;
-        }
-      }
+  // --- AFFICHAGE GLOUTON ---
+  printf("\n[--- HEURISTIQUE GLOUTONNE ---]\n");
+  int cout_final = 0;
+  int poids_total = 0;
+  
+  double *x_orig = calloc(n, sizeof(double));
+  for (int j = 0; j < n; j++) {
+    if (x[j] > 0) {
+      x_orig[str[j].index] = x[j];
+      cout_final += str[j].c;
+      poids_total += str[j].a;
+    }
+  }
 
-      printf("Cout final de l'algorithme Relaxation lineaire: %f \n",
-             cout_final);
-      return cout_final;
+  printf("> Solution x (indices d'origine) : [ ");
+  for (int i = 0; i < n; i++) printf("%.0f ", x_orig[i]);
+  printf("]\n");
+  
+  printf("> Capacite utilisee : %d / %d\n", poids_total, dsptr->b);
+  printf("> Profit total      : %d\n", cout_final);
+  
+  free(x_orig);
+  free(str);
+  free(x);
+  
+  return cout_final;
+}
+
+double KP_LP(dataSet *dsptr) {
+  int n = dsptr->n;
+
+  STR *str = (STR *)malloc(sizeof(STR) * n);
+
+  for (int i = 0; i < n; i++) {
+    str[i].a = dsptr->a[i];
+    str[i].c = dsptr->c[i];
+    str[i].ratio = (double)dsptr->c[i] / (double)dsptr->a[i];
+    str[i].index = i;
+  }
+
+  qsort(str, n, sizeof(STR), comparaison);
+
+  double *x = malloc(n * sizeof(double));
+  for (int i = 0; i < n; i++) {
+    x[i] = 0;
+  }
+
+  double b = dsptr->b;
+
+  for (int j = 0; j < n; j++) {
+    if (b == 0) {
+      break;
     }
     x[j] = MIN((b / str[j].a), 1);
-    // printf("Valeur de x[%d] : %f \n", j, x[j]);
-
-    // printf("Valeur de b avant la soustraction %f \n", b);
     b = b - (x[j] * str[j].a);
-
-    // printf("Valeur de b apres la soustraction %f \n", b);
   }
 
-  printf("Tableau x final Linear:\n");
-  for (int i = 0; i < dsptr->n; i++) {
-    printf("x[%d] = %f\n", i, x[i]);
+  // --- AFFICHAGE RELAXATION LINEAIRE ---
+  printf("\n[--- RELAXATION LINEAIRE ---]\n");
+  double cout_final = 0.0;
+  
+  double *x_orig = calloc(n, sizeof(double));
+  for (int j = 0; j < n; j++) {
+    x_orig[str[j].index] = x[j];
+    cout_final += x[j] * str[j].c;
   }
 
-  double cout_final = 0;
-
-  for (int i = 0; i < dsptr->n; i++) {
-    if (x[i] != 0) {
-      cout_final += x[i] * str[i].c;
+  printf("> Solution x (indices d'origine) : [ ");
+  for (int i = 0; i < n; i++) {
+    if (x_orig[i] == 1.0 || x_orig[i] == 0.0) {
+      printf("%.0f ", x_orig[i]);
+    } else {
+      printf("\033[1;31m%.2f\033[0m ", x_orig[i]); 
     }
   }
+  printf("]\n");
+  
+  printf("> Profit (Borne Sup): %.2f\n", cout_final);
 
-  printf("Cout final de l'algorithme Relaxation lineaire: %f \n", cout_final);
+  free(x_orig);
+  free(str);
+  free(x);
+  
   return cout_final;
 }
 
 int KP_dynamic(dataSet *dsptr) {
-
   int n = dsptr->n;
-  // Definition de la structure
-  STR *str = (STR *)malloc(sizeof(STR) * n);
+  int b = dsptr->b;
 
+  STR *str = (STR *)malloc(sizeof(STR) * n);
   for (int i = 0; i < n; i++) {
     str[i].a = dsptr->a[i];
     str[i].c = dsptr->c[i];
@@ -204,14 +186,10 @@ int KP_dynamic(dataSet *dsptr) {
     str[i].index = i;
   }
 
-  double b = dsptr->b;
-  // D(y) = max{j ⩽ k : xj = 1 pour le probleme Pk(y)}
   int *D = malloc((b + 1) * sizeof(int));
-
-  // Z(y) = valeur optimale du probl`eme Pk(y)
   int *Z = malloc((b + 1) * sizeof(int));
-
   int *Z_prime = malloc((b + 1) * sizeof(int));
+  
   for (int y = 0; y <= b; y++) {
     Z[y] = 0;
     D[y] = 0;
@@ -239,47 +217,49 @@ int KP_dynamic(dataSet *dsptr) {
   int y = b;
 
   while (y > 0) {
-    while (Z[y] == Z[y - 1]) {
+    while (y > 0 && Z[y] == Z[y - 1]) {
       y = y - 1;
     }
 
-    if (D[y] > 0) {
+    if (y > 0 && D[y] > 0) {
       x[D[y] - 1] = 1;
-    };
-    y = y - str[D[y] - 1].a;
+      y = y - str[D[y] - 1].a;
+    } else {
+      break;
+    }
   }
 
-  printf("Tableau x final Dynamic Programming:\n");
-  for (int i = 0; i < dsptr->n; i++) {
-    printf("x[%d] = %f\n", i, x[i]);
-  }
+  int profit_optimal = Z[b];
 
-  printf("VALEURS DE D:\n");
-  for (int y = 0; y <= b; y++) {
-    printf("D[%d] = %d\n", y, D[y]);
+  // --- AFFICHAGE DP ---
+  printf("\n[--- PROGRAMMATION DYNAMIQUE ---]\n");
+  printf("> Solution x optimale : [ ");
+  for (int i = 0; i < n; i++) {
+    printf("%.0f ", x[i]);
   }
+  printf("]\n");
+  printf("> Profit Optimal Exact : %d\n", profit_optimal);
 
-  printf("VALEURS DE Z:\n");
-  for (int y = 0; y <= b; y++) {
-    printf("Z[%d] = %d\n", y, Z[y]);
-  }
-  return *x;
+  free(D);
+  free(Z);
+  free(Z_prime);
+  free(x);
+  free(str);
+
+  return profit_optimal;
 }
 
 int KP_VP(dataSet *dsptr){
-
-	int rval;
-	int greedy_solution = KP_greedy(dsptr);
-	double relax_solution = KP_LP(dsptr);
-	int n = dsptr->n;
-  double *x = malloc(n * sizeof(double));
+  int greedy_solution = KP_greedy(dsptr);
+  double relax_solution = KP_LP(dsptr);
+  int n = dsptr->n;
+  int b = dsptr->b;
 
   STR *str = (STR *)malloc(sizeof(STR) * n);
-
   for (int i = 0; i < n; i++) {
     str[i].a = dsptr->a[i];
     str[i].c = dsptr->c[i];
-    str[i].ratio = (double)dsptr->c[i] / dsptr->a[i];
+    str[i].ratio = (double)dsptr->c[i] / (double)dsptr->a[i];
     str[i].index = i;
   }
 
@@ -287,7 +267,6 @@ int KP_VP(dataSet *dsptr){
 
   int p = -1;
   int poids_courrant = 0;
-  int b = dsptr->b;
 
   for(int j = 0; j<n; j++){
     if(poids_courrant + str[j].a > b){
@@ -298,7 +277,8 @@ int KP_VP(dataSet *dsptr){
   }
 
   if(p == -1){
-    printf("Tous les objets rentrent dans le sac. Pas besoin de reduir");
+    printf("\n[--- PREPROCESSING ---]\n");
+    printf("Tous les objets rentrent dans le sac. Pas besoin de reduire.\n");
     free(str);
     return greedy_solution;
   }
@@ -307,87 +287,81 @@ int KP_VP(dataSet *dsptr){
   double ap = str[p].a;
   double ratio_p = cp / ap;
 
-
   double ecart = relax_solution - (double)greedy_solution;
   int variables_fixees = 0;
 
   int b_reduit = dsptr->b;
   int profit_fixe = 0;
 
+  int *x_statut = malloc(n * sizeof(int));
   for (int i = 0; i < n; i++) {
-        x[i] = -1;
-    }
+      x_statut[i] = -1;
+  }
 
-    for (int j = 0; j < n; j++) {
-        // c_j barre : |cj - (cp/ap)*aj|
-        double c_barre = fabs(str[j].c - (ratio_p * str[j].a));
+  for (int j = 0; j < n; j++) {
+      double c_barre = fabs(str[j].c - (ratio_p * str[j].a));
 
-        if (c_barre >= ecart) {
-            variables_fixees++;
-            int index_original = str[j].index;
+      if (c_barre >= ecart) {
+          variables_fixees++;
+          int index_original = str[j].index;
 
-            if (j < p) {
-                // On force l'objet à 1 (on le met dans le sac)
-                x[index_original] = 1;
-                b_reduit = b_reduit - str[j].a;
-                profit_fixe = profit_fixe + str[j].c;
-            } else {
-                // On force l'objet à 0 (on le jette)
-                x[index_original] = 0;
-            }
-        }
-    }
+          if (j < p) {
+              x_statut[index_original] = 1;
+              b_reduit = b_reduit - str[j].a;
+              profit_fixe = profit_fixe + str[j].c;
+          } else {
+              x_statut[index_original] = 0;
+          }
+      }
+  }
 
-    printf("Nombre de variables fixees : %d sur %d\n", variables_fixees, n);
+  int n_reduit = n - variables_fixees;
+  int resultat_final = profit_fixe;
 
-    // 6. Créer l'instance réduite et lancer la Programmation Dynamique
-    int n_reduit = n - variables_fixees;
-    int resultat_final = profit_fixe;
+  // --- AFFICHAGE PREPROCESSING ---
+  printf("\n[--- PREPROCESSING & REDUCTION ---]\n");
+  printf("> Borne Inf (Greedy)   : %d\n", greedy_solution);
+  printf("> Borne Sup (LP)       : %.2f\n", relax_solution);
+  printf("> Ecart (Gap)          : %.2f\n", ecart);
+  
+  printf("\n> Objet critique (p)   : index trie %d (Valeur: %.2f, Poids: %.2f)\n", p, cp, ap);
+  printf("> Variables fixees     : %d sur %d\n", variables_fixees, n);
+  printf("> Capacite sac reduit  : %d (Initiale : %d)\n", b_reduit, dsptr->b);
+  printf("> Objets pour le DP    : %d\n", n_reduit);
 
-    // S'il reste des objets à évaluer et qu'il reste de la place
-    if (n_reduit > 0 && b_reduit > 0) {
-        
-        // Création du nouveau sac à dos réduit
-        dataSet dsptr_reduit;
-        dsptr_reduit.n = n_reduit;
-        dsptr_reduit.b = b_reduit;
-        dsptr_reduit.a = (int *)malloc(sizeof(int) * n_reduit);
-        dsptr_reduit.c = (int *)malloc(sizeof(int) * n_reduit);
+  if (n_reduit > 0 && b_reduit > 0) {
+      
+      dataSet dsptr_reduit;
+      dsptr_reduit.n = n_reduit;
+      dsptr_reduit.b = b_reduit;
+      dsptr_reduit.a = (int *)malloc(sizeof(int) * n_reduit);
+      dsptr_reduit.c = (int *)malloc(sizeof(int) * n_reduit);
 
-        int idx_reduit = 0;
-        // On remplit le sac réduit en parcourant les objets dans leur ordre d'origine
-        for (int i = 0; i < n; i++) {
-            if (x[i] == -1) { // Si l'objet n'a pas été fixé
-                dsptr_reduit.a[idx_reduit] = dsptr->a[i];
-                dsptr_reduit.c[idx_reduit] = dsptr->c[i];
-                idx_reduit++;
-            }
-        }
+      int idx_reduit = 0;
+      for (int i = 0; i < n; i++) {
+          if (x_statut[i] == -1) { 
+              dsptr_reduit.a[idx_reduit] = dsptr->a[i];
+              dsptr_reduit.c[idx_reduit] = dsptr->c[i];
+              idx_reduit++;
+          }
+      }
 
-        // 7. Résoudre le problème réduit avec KP_dynamic
-        printf("\n--- LANCEMENT DP SUR PROBLEME REDUIT ---\n");
-        printf("Objets restants : %d, Capacite restante : %d\n", n_reduit, b_reduit);
-        
-        int dp_result = KP_dynamic(&dsptr_reduit); // Étape 10 de l'algorithme du PDF
-        
-        // Le résultat final est la somme de ce qu'on a pré-rempli + ce que le DP a trouvé
-        resultat_final = profit_fixe + dp_result;
+      int dp_result = KP_dynamic(&dsptr_reduit);
+      resultat_final = profit_fixe + dp_result;
 
-        // On libère la mémoire de l'instance réduite
-        free(dsptr_reduit.a);
-        free(dsptr_reduit.c);
-        
-    } else {
-        // Soit le sac est plein (b_reduit <= 0), soit tous les objets ont été fixés (n_reduit == 0)
-        printf("Aucun objet supplementaire a evaluer (Capacite restante: %d, Objets restants: %d).\n", b_reduit, n_reduit);
-    }
+      free(dsptr_reduit.a);
+      free(dsptr_reduit.c);
+      
+  } else {
+      printf("\nAucun objet supplementaire a evaluer.\n");
+  }
 
-    printf("\nProfit des objets fixes d'avance : %d\n", profit_fixe);
-    printf("--- PROFIT TOTAL FINAL (Apres reduction) : %d ---\n\n", resultat_final);
+  printf("\n> Profit objets fixes  : %d\n", profit_fixe);
+  printf(">> PROFIT TOTAL FINAL  : %d <<\n", resultat_final);
+  printf("---------------------------------------------------\n");
 
-    // 8. Nettoyage de la mémoire allouée
-    free(x);
-    free(str);
+  free(x_statut);
+  free(str);
 
-    return resultat_final;
+  return resultat_final;
 }
